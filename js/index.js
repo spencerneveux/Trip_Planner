@@ -45,8 +45,8 @@ function initMap() {
   };
 
   //Event listeners for input options
-  document.getElementById("when").addEventListener("change", showHideWhen);
-  document.getElementById("datePicker").addEventListener("change", showHideWhen);
+  document.getElementById("when").addEventListener("change", showHideDateTimeContainer);
+  document.getElementById("datePicker").addEventListener("change", showHideDateTimeContainer);
   document.getElementById("lbt-trip-planner-button").addEventListener("click", onChangeHandler);
 }
  
@@ -56,86 +56,279 @@ function calculateAndDisplayRoute(directionsService, directionsRenderer) {
   var end = strReplaceUSA(document.getElementById("end").value);
   var when = document.getElementById("when");
 
-  //Identify if departure or arrival time is selected
-  if (when.value === "depart" || when.value === "arrive") {
-    const dateContainer = document.getElementById("date-time-container");
-    dateContainer.style.display = "block";
-    var date = document.getElementById("datePicker");
-  }
-  else {
-    const dateContainer = document.getElementById("date-time-container");
-    dateContainer.style.display = "none";
-    var date = new Date();
-  }
+  //Identify if departure or arrival time is selected & get date value
+  var date = showHideDateTimeContainer();
+
+  const directionsManager = new DirectionsManager();
 
   if (when.value === "any") {
-    //Get directions and display on map
-    directionsService.route(
-      {
-        origin: start,
-        destination: end,
-        travelMode: 'TRANSIT',
-        transitOptions: {
-        departureTime: new Date(),
-        modes: ['BUS'],
-        routingPreference: 'FEWER_TRANSFERS'
-      }
-      },
-      (response, status) => {
-        if (status === "OK") {
-          directionsRenderer.setDirections(response);
-        } else {
-          window.alert("Directions request failed due to " + status);
-        }
-      }
-    );
+    const leaveNow = new LeaveNow(start, end, directionsService, directionsRenderer);
+
+    directionsManager.set_strategy(leaveNow);
+    directionsManager.doAction();
   }
   else if (when.value === "depart") {
-    //Get directions and display on map
-    directionsService.route(
-      {
-        origin: start,
-        destination: end,
-        travelMode: 'TRANSIT',
-        transitOptions: {
-        departureTime: new Date(date.value),
-        modes: ['BUS'],
-        routingPreference: 'FEWER_TRANSFERS'
-      }
-      },
-      (response, status) => {
-        if (status === "OK") {
-          directionsRenderer.setDirections(response);
-        } else {
-          window.alert("Directions request failed due to " + status);
-        }
-      }
-    );
+    const departAt = new DepartAt(date, start, end, directionsService, directionsRenderer);
+
+    directionsManager.set_strategy(departAt);
+    directionsManager.doAction();
   }
   else if (when.value === "arrive") {
-    //Get directions and display on map
-    directionsService.route(
-      {
-        origin: start,
-        destination: end,
-        travelMode: 'TRANSIT',
-        transitOptions: {
-        arrivalTime: new Date(date.value),
-        modes: ['BUS'],
-        routingPreference: 'FEWER_TRANSFERS'
-      }
-      },
-      (response, status) => {
-        if (status === "OK") {
-          directionsRenderer.setDirections(response);
-        } else {
-          window.alert("Directions request failed due to " + status);
-        }
-      }
-    );
+    const arriveAt = new ArriveAt(date, start, end, directionsService, directionsRenderer);
+
+    directionsManager.set_strategy(arriveAt);
+    directionsManager.doAction();
   }
- 
+
+
 }
+
+//=======================================
+// Directions Manager - Strategy Pattern
+//=======================================
+class DirectionsManager {
+    constructor() {
+        this._strategy = null;
+    }
+
+    set_strategy(strategy) {
+        this._strategy = strategy;
+    }
+
+    get_strategy() {
+        return this._strategy;
+    }
+
+    doAction() {
+        this._strategy.doAction();
+    }
+}
+
+class LeaveNow {
+    constructor(startAddress, endAddress, directionsService, directionsRenderer) {
+        this._when = "now";
+        this._startAddress = startAddress;
+        this._endAddress = endAddress;
+        this._directionsService = directionsService;
+        this._directionsRenderer = directionsRenderer;
+    }
+
+    set_startAddress(startAddress) {
+        this._startAddress = startAddress;
+    }
+
+    get_startAddress() {
+        return this._startAddress;
+    }
+
+    set_endAddress(endAddress) {
+        this._endAddress = endAddress;
+    }
+
+    get_endAddress() {
+        return this._endAddress;
+    }
+
+    set_directionsService(directionsService) {
+        this._directionsService = directionsService;
+    }
+
+    get_directionsService() {
+        return this._directionsService;
+    }
+
+    set_directionsRenderer(directionsRenderer) {
+        this._directionsRenderer = directionsRenderer;
+    }
+
+    get_directionsRenderer() {
+        return this._directionsRenderer;
+    }
+
+    doAction() {
+        console.log(this._when);
+        this.buildDirectionService();
+    }
+
+    buildDirectionService() {
+        this._directionsService.route(
+            {
+              origin: this._startAddress,
+              destination: this._endAddress,
+              travelMode: 'TRANSIT',
+              transitOptions: {
+              departureTime: new Date(),
+              modes: ['BUS'],
+              routingPreference: 'FEWER_TRANSFERS'
+            }
+            },
+            (response, status) => {
+              if (status === "OK") {
+                this._directionsRenderer.setDirections(response);
+              } else {
+                window.alert("Directions request failed due to " + status);
+              }
+            }
+        );
+    }
+}
+
+class DepartAt {
+    constructor(date, startAddress, endAddress, directionsService, directionsRenderer) {
+        this._when = "depart";
+        this._date = date;
+        this._startAddress = startAddress;
+        this._endAddress = endAddress;
+        this._directionsService = directionsService;
+        this._directionsRenderer = directionsRenderer;
+    }
+
+    set_date(date) {
+        this._date = date;
+    }
+
+    get_date() {
+        return this._date;
+    }
+
+    set_startAddress(startAddress) {
+        this._startAddress = startAddress;
+    }
+
+    get_startAddress() {
+        return this._startAddress;
+    }
+
+    set_endAddress(endAddress) {
+        this._endAddress = endAddress;
+    }
+
+    get_endAddress() {
+        return this._endAddress;
+    }
+
+    set_directionsService(directionsService) {
+        this._directionsService = directionsService;
+    }
+
+    get_directionsService() {
+        return this._directionsService;
+    }
+
+    set_directionsRenderer(directionsRenderer) {
+        this._directionsRenderer = directionsRenderer;
+    }
+
+    get_directionsRenderer() {
+        return this._directionsRenderer;
+    }
+
+    doAction() {
+        console.log(this._when);
+        this.buildDirectionService();
+    }
+
+    buildDirectionService() {
+        this._directionsService.route(
+            {
+              origin: this._startAddress,
+              destination: this._endAddress,
+              travelMode: 'TRANSIT',
+              transitOptions: {
+              departureTime: new Date(this._date.value),
+              modes: ['BUS'],
+              routingPreference: 'FEWER_TRANSFERS'
+            }
+            },
+            (response, status) => {
+              if (status === "OK") {
+                this._directionsRenderer.setDirections(response);
+              } else {
+                window.alert("Directions request failed due to " + status);
+              }
+            }
+        );
+    }
+}
+
+class ArriveAt {
+    constructor(date, startAddress, endAddress, directionsService, directionsRenderer) {
+        this._when = "arrive";
+        this._date = date;
+        this._startAddress = startAddress;
+        this._endAddress = endAddress;
+        this._directionsService = directionsService;
+        this._directionsRenderer = directionsRenderer;
+    }
+
+    set_date(date) {
+        this._date = date;
+    }
+
+    get_date() {
+        return this._date;
+    }
+
+    set_startAddress(startAddress) {
+        this._startAddress = startAddress;
+    }
+
+    get_startAddress() {
+        return this._startAddress;
+    }
+
+    set_endAddress(endAddress) {
+        this._endAddress = endAddress;
+    }
+
+    get_endAddress() {
+        return this._endAddress;
+    }
+
+    set_directionsService(directionsService) {
+        this._directionsService = directionsService;
+    }
+
+    get_directionsService() {
+        return this._directionsService;
+    }
+
+    set_directionsRenderer(directionsRenderer) {
+        this._directionsRenderer = directionsRenderer;
+    }
+
+    get_directionsRenderer() {
+        return this._directionsRenderer;
+    }
+
+    doAction() {
+        console.log(this._when);
+        this.buildDirectionService();
+    }
+
+    buildDirectionService() {
+        this._directionsService.route(
+            {
+              origin: this._startAddress,
+              destination: this._endAddress,
+              travelMode: 'TRANSIT',
+              transitOptions: {
+              arrivalTime: new Date(this._date.value),
+              modes: ['BUS'],
+              routingPreference: 'FEWER_TRANSFERS'
+            }
+            },
+            (response, status) => {
+              if (status === "OK") {
+                this._directionsRenderer.setDirections(response);
+              } else {
+                window.alert("Directions request failed due to " + status);
+              }
+            }
+        );
+    }
+}
+
 //===================================
 // Utility Functions
 //===================================
@@ -151,18 +344,20 @@ function strReplaceUSA(str) {
 
 /*
 * Show or hide the DOM element with id date-time-container 
-* @param 
+* @return Date - New date or date selected from input
 */
-function showHideWhen() {
-    const when = document.getElementById("when");
+function showHideDateTimeContainer() {
+  var date = new Date();
+  const when = document.getElementById("when");
   const dateContainer = document.getElementById("date-time-container");
 
   if (when.value === "depart" || when.value === "arrive") {
     dateContainer.style.display = "block";
-    var date = document.getElementById("datePicker");
+    date = document.getElementById("datePicker");
   }
   else {
     dateContainer.style.display = "none";
-    var date = new Date();
   }
+
+  return date;
 }
