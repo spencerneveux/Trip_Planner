@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDUh0RlZpGvwLqA2k-WC6ZdeSGYuIPjDDU&callback=initMap&libraries=places&v=weekly"
+      defer
+    ></script>
+    <link rel="stylesheet" type="text/css" href="css/style.css" />
+    <script src="js/index.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <section class="grid">
+        <div id="floating-panel">
+            <strong>Start:</strong>
+            <input type="text" id="start" name="startAddress" placeholder="Starting Location">
+            <br />
+            <strong>End:</strong>
+            <input type="text" id="end" name="endAddress" placeholder="Ending Location">
+            <br>
+            <strong>When:</strong>
+            <select id="when">
+              <option value="any">Leave Now</option>
+              <option value="depart">Depart At</option>
+              <option value="arrive">Arrive At</option>
+            </select>
+            <br>
+            <div id="date-time-container" style="display:none">
+              <strong>Date & Time:</strong>
+              <input type="datetime-local" id="datePicker" name="datePicker">
+            </div>
+            <button id="lbt-trip-planner-button" type="button">Submit</button>
+        </div>
+        <div id="map-container">
+            <div id="map"></div>
+        </div>
+        <div id="directions-panel">
+            <h1 id="lbtHeader">Long Beach Transit - Trip Planner</h1>
+            <hr>
+        </div>
+    </section>
+</body>
+</html>

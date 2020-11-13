@@ -1,0 +1,100 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 75% auto;
+    grid-template-rows: 1fr;
+    grid-template-areas:
+        "map directions";
+}
+
+#floating-panel {
+    position: absolute;
+    top: 10px;
+    left: 25%;
+    z-index: 5;
+    background-color: #fff;
+    padding: 5px;
+    border: 1px solid #ccc;
+    text-align: center;
+    font-family: "Montserrat", "sans-serif";
+    line-height: 30px;
+    padding-left: 10px;
+    box-shadow: 0 2px 2px rgba(33, 33, 33, 0.4);
+    font-size: 18px;
+}
+
+#directions-panel {
+    font-family: "Montserrat", "sans-serif";
+    line-height: 30px;
+    padding: 10px;
+}
+  
+#map-container {
+    height: 100vh;
+    width: 100%;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    grid-area: map;
+}
+
+#directions-panel {
+    grid-area: directions;
+}
+
+#start, #end {
+    background-color: #fff;
+    font-family: Montserrat;
+    font-size: 18px;
+    font-weight: 300;
+    margin-left: 12px;
+    padding: 0 11px 0 13px;
+    text-overflow: ellipsis;
+    width: 400px;
+}
+
+#when {
+    font-family: Montserrat;
+    font-size: 18px;
+    font-weight: 300;
+}
+
+#lbt-trip-planner-button {
+    font-family: Montserrat;
+    font-size: 18px;
+    font-weight: 300;
+    background-color: #e02b20;
+    color: #fff;
+    padding: 0.3em 1em;
+    border: 2px solid;
+    border-radius: 5px;
+    margin-top: 5px;
+}
+
+@media (max-width: 700px) {
+    #floating-panel {
+        position: absolute;
+        top: 100px;
+        left: 10%;
+        font-size: 15px;
+    }
+
+    #start, #end {
+        width: auto;
+    }
+
+    .grid {
+        grid-template-columns: auto;
+        grid-template-areas: 
+            "map"
+            "directions";
+    }
+}
