@@ -23,23 +23,29 @@ function initMap() {
       position: google.maps.ControlPosition.BOTTOM_LEFT,
     }
   });
+
+  //Setters for directions renderer
   directionsRenderer.setMap(map);
   directionsRenderer.setPanel(document.getElementById("directions-panel"));
+
+  //Get extra control panel
   const control = document.getElementById("floating-panel");
   control.style.display = "block";
 
-  // Create the search box and link it to the UI element.
+  //Create the search box and link it to the UI element.
   const input = document.getElementById("start");
   const input2 = document.getElementById("end");
   const searchBox = new google.maps.places.SearchBox(input);
   const searchBox2 = new google.maps.places.SearchBox(input2);
 
+  //Set map controls and setup listener for when bounds change
   map.controls[google.maps.ControlPosition.TOP_CENTER].push(control);
   map.addListener("bounds_changed", () => {
     searchBox.setBounds(map.getBounds());
     searchBox2.setBounds(map.getBounds());
   });
 
+  //
   const onChangeHandler = function () {
     calculateAndDisplayRoute(directionsService, directionsRenderer);
   };
@@ -50,17 +56,27 @@ function initMap() {
   document.getElementById("lbt-trip-planner-button").addEventListener("click", onChangeHandler);
 }
  
-//Calculates and displays the route using values from start & end input values
+/*
+*
+* Description - Calculates and displays route from user supplied starting and ending location
+* as well as when they want to leave [now, depart at, arrive at].
+* 
+* @param DirectionsService directionsService - google maps DirectionsService class
+* @param DirectionsRenderer directionsRenderer - google maps DirectionsRenderer class
+*
+*/
 function calculateAndDisplayRoute(directionsService, directionsRenderer) {
+  var when = document.getElementById("when");
   var start = strReplaceUSA(document.getElementById("start").value);
   var end = strReplaceUSA(document.getElementById("end").value);
-  var when = document.getElementById("when");
 
   //Identify if departure or arrival time is selected & get date value
   var date = showHideDateTimeContainer();
 
+  //Instantiat direction manager class to handle time inputs
   const directionsManager = new DirectionsManager();
 
+  //Call respective strategy depending upon user input
   if (when.value === "any") {
     const leaveNow = new LeaveNow(start, end, directionsService, directionsRenderer);
 
@@ -79,13 +95,18 @@ function calculateAndDisplayRoute(directionsService, directionsRenderer) {
     directionsManager.set_strategy(arriveAt);
     directionsManager.doAction();
   }
-
-
 }
 
 //=======================================
 // Directions Manager - Strategy Pattern
 //=======================================
+
+/*
+*
+* Description - This class employs the Strategy Design pattern to handle custom 
+* outputs depending upon user selected options.
+*
+*/
 class DirectionsManager {
     constructor() {
         this._strategy = null;
@@ -157,16 +178,17 @@ class LeaveNow {
               destination: this._endAddress,
               travelMode: 'TRANSIT',
               transitOptions: {
-              departureTime: new Date(),
-              modes: ['BUS'],
-              routingPreference: 'FEWER_TRANSFERS'
-            }
+                departureTime: new Date(),
+                modes: ['BUS'],
+                routingPreference: 'FEWER_TRANSFERS'
+                }
             },
             (response, status) => {
               if (status === "OK") {
                 this._directionsRenderer.setDirections(response);
               } else {
-                window.alert("Directions request failed due to " + status);
+                const errorHandler = new ErrorHandler(status);
+                errorHandler.handle();
               }
             }
         );
@@ -235,16 +257,17 @@ class DepartAt {
               destination: this._endAddress,
               travelMode: 'TRANSIT',
               transitOptions: {
-              departureTime: new Date(this._date.value),
-              modes: ['BUS'],
-              routingPreference: 'FEWER_TRANSFERS'
-            }
+                departureTime: new Date(this._date.value),
+                modes: ['BUS'],
+                routingPreference: 'FEWER_TRANSFERS'
+                }
             },
             (response, status) => {
               if (status === "OK") {
                 this._directionsRenderer.setDirections(response);
               } else {
-                window.alert("Directions request failed due to " + status);
+                const errorHandler = new ErrorHandler(status);
+                errorHandler.handle();
               }
             }
         );
@@ -313,28 +336,66 @@ class ArriveAt {
               destination: this._endAddress,
               travelMode: 'TRANSIT',
               transitOptions: {
-              arrivalTime: new Date(this._date.value),
-              modes: ['BUS'],
-              routingPreference: 'FEWER_TRANSFERS'
-            }
+                arrivalTime: new Date(this._date.value),
+                modes: ['BUS'],
+                routingPreference: 'FEWER_TRANSFERS'
+                }
             },
             (response, status) => {
               if (status === "OK") {
                 this._directionsRenderer.setDirections(response);
               } else {
-                window.alert("Directions request failed due to " + status);
+                const errorHandler = new ErrorHandler(status);
+                errorHandler.handle();
               }
             }
         );
     }
 }
 
+//=======================================
+// Error Handler
+//=======================================
+class ErrorHandler {
+    constructor(status) {
+        this._status = status;
+    }
+
+    handle() {
+        switch(this._status) {
+            case "NOT_FOUND":
+                window.alert("Sorry! We coudln't find at least one of the specified locations in your request.");
+                break;
+            case "ZERO_RESULTS":
+                window.alert("Sorry! No route could be found between your origin and destination.");
+                break;
+            case "INVALID_REQUEST":
+                window.alert("Sorry! The request provided was invalid.");
+                break;
+            case "OVER_QUERY_LIMIT":
+                window.alert("Sorry! You have sent too many requests in a given time. Please try again later.");
+                break;
+            case "REQUEST_DENIED":
+                window.alert("Sorry! You don't have access to use the directions service.");
+                break;
+            case "UNKNOWN_ERROR":
+                window.alert("Whoops! We don't know what went wrong.");
+                break;
+        }
+    }
+
+}
+
+
 //===================================
 // Utility Functions
 //===================================
 
 /*
-* Given a string, attempt to replace substring ', USA'
+* Description - Given a string, attempt to replace substring ', USA'
+* For some reason Google's Directions Service isn't handling the USA portion
+* of a supplied address. It causes it to render the wrong locations, so removing
+* it for now.
 * @param string str
 */
 function strReplaceUSA(str) {
