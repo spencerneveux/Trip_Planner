@@ -5,6 +5,10 @@
  * Author: Spencer Neveux 
  * Version: 0.0.1 
 */
+
+//=======================================
+// Main
+//=======================================
 const LONGBEACH = { lat: 33.77, lng: -118.19 };
 
 function initMap() {
@@ -54,47 +58,6 @@ function initMap() {
   document.getElementById("when").addEventListener("change", showHideDateTimeContainer);
   document.getElementById("datePicker").addEventListener("change", showHideDateTimeContainer);
   document.getElementById("lbt-trip-planner-button").addEventListener("click", onChangeHandler);
-}
- 
-/*
-*
-* Description - Calculates and displays route from user supplied starting and ending location
-* as well as when they want to leave [now, depart at, arrive at].
-* 
-* @param DirectionsService directionsService - google maps DirectionsService class
-* @param DirectionsRenderer directionsRenderer - google maps DirectionsRenderer class
-*
-*/
-function calculateAndDisplayRoute(directionsService, directionsRenderer) {
-  var when = document.getElementById("when");
-  var start = strReplaceUSA(document.getElementById("start").value);
-  var end = strReplaceUSA(document.getElementById("end").value);
-
-  //Identify if departure or arrival time is selected & get date value
-  var date = showHideDateTimeContainer();
-
-  //Instantiat direction manager class to handle time inputs
-  const directionsManager = new DirectionsManager();
-
-  //Call respective strategy depending upon user input
-  if (when.value === "any") {
-    const leaveNow = new LeaveNow(start, end, directionsService, directionsRenderer);
-
-    directionsManager.set_strategy(leaveNow);
-    directionsManager.doAction();
-  }
-  else if (when.value === "depart") {
-    const departAt = new DepartAt(date, start, end, directionsService, directionsRenderer);
-
-    directionsManager.set_strategy(departAt);
-    directionsManager.doAction();
-  }
-  else if (when.value === "arrive") {
-    const arriveAt = new ArriveAt(date, start, end, directionsService, directionsRenderer);
-
-    directionsManager.set_strategy(arriveAt);
-    directionsManager.doAction();
-  }
 }
 
 //=======================================
@@ -422,3 +385,45 @@ function showHideDateTimeContainer() {
 
   return date;
 }
+
+
+/*
+*
+* Description - Calculates and displays route from user supplied starting and ending location
+* as well as when they want to leave [now, depart at, arrive at].
+* 
+* @param DirectionsService directionsService - google maps DirectionsService class
+* @param DirectionsRenderer directionsRenderer - google maps DirectionsRenderer class
+*
+*/
+function calculateAndDisplayRoute(directionsService, directionsRenderer) {
+    var when = document.getElementById("when");
+    var start = strReplaceUSA(document.getElementById("start").value);
+    var end = strReplaceUSA(document.getElementById("end").value);
+  
+    //Identify if departure or arrival time is selected & get date value
+    var date = showHideDateTimeContainer();
+  
+    //Instantiat direction manager class to handle time inputs
+    const directionsManager = new DirectionsManager();
+  
+    //Call respective strategy depending upon user input
+    if (when.value === "any") {
+      const leaveNow = new LeaveNow(start, end, directionsService, directionsRenderer);
+  
+      directionsManager.set_strategy(leaveNow);
+      directionsManager.doAction();
+    }
+    else if (when.value === "depart") {
+      const departAt = new DepartAt(date, start, end, directionsService, directionsRenderer);
+  
+      directionsManager.set_strategy(departAt);
+      directionsManager.doAction();
+    }
+    else if (when.value === "arrive") {
+      const arriveAt = new ArriveAt(date, start, end, directionsService, directionsRenderer);
+  
+      directionsManager.set_strategy(arriveAt);
+      directionsManager.doAction();
+    }
+  }
