@@ -60,11 +60,11 @@ function initMap() {
   document.getElementById("lbt-trip-planner-button").addEventListener("click", onChangeHandler);
 }
 
-//=======================================
-// Directions Manager - Strategy Pattern
-//=======================================
+//===============================================
+// Directions Manager - Strategy Design Pattern
+//===============================================
 
-/*
+/** 
 *
 * Description - This class employs the Strategy Design pattern to handle custom 
 * outputs depending upon user selected options.
@@ -75,11 +75,11 @@ class DirectionsManager {
         this._strategy = null;
     }
 
-    set_strategy(strategy) {
+    set strategy(strategy) {
         this._strategy = strategy;
     }
 
-    get_strategy() {
+    get strategy() {
         return this._strategy;
     }
 
@@ -88,45 +88,85 @@ class DirectionsManager {
     }
 }
 
-class LeaveNow {
-    constructor(startAddress, endAddress, directionsService, directionsRenderer) {
-        this._when = "now";
+
+/**
+ * Abstract Class Departure. Used for different strategies.
+ * @class Departure
+ */
+class Departure {
+    /**
+     * Simple constructor for the abstract Departure class
+     * @param  {Date} date
+     * @param  {String} startAddress
+     * @param  {String} endAddress
+     * @param  {DirectionsService} directionsService
+     * @param  {DirectionsRenderer} directionsRenderer
+     */
+    constructor(date, startAddress, endAddress, directionsService, directionsRenderer) {
+        this._date = date;
         this._startAddress = startAddress;
         this._endAddress = endAddress;
         this._directionsService = directionsService;
         this._directionsRenderer = directionsRenderer;
     }
 
-    set_startAddress(startAddress) {
+    set date(date) {
+        this._date = date;
+    }
+
+    get date() {
+        return this._date;
+    }
+
+    set startAddress(startAddress) {
         this._startAddress = startAddress;
     }
 
-    get_startAddress() {
+    get startAddress() {
         return this._startAddress;
     }
 
-    set_endAddress(endAddress) {
+    set endAddress(endAddress) {
         this._endAddress = endAddress;
     }
 
-    get_endAddress() {
+    get endAddress() {
         return this._endAddress;
     }
 
-    set_directionsService(directionsService) {
+    set directionsService(directionsService) {
         this._directionsService = directionsService;
     }
 
-    get_directionsService() {
+    get directionsService() {
         return this._directionsService;
     }
 
-    set_directionsRenderer(directionsRenderer) {
+    set directionsRenderer(directionsRenderer) {
         this._directionsRenderer = directionsRenderer;
     }
 
-    get_directionsRenderer() {
+    get directionsRenderer() {
         return this._directionsRenderer;
+    }
+
+    toString() {
+        console.log(
+            "Starting Address: " + this._startAddress + "\n" + 
+            "Ending Address: " +  this._endAddress
+        );
+    }
+
+}
+
+/**
+ * Strategy class to help with leave now pattern. 
+ * @extends {Departure}
+ */
+class LeaveNow extends Departure {
+    constructor(date, startAddress, endAddress, directionsService, directionsRenderer) {
+        super(date, startAddress, endAddress, directionsService, directionsRenderer);
+        this._when = "now";
     }
 
     doAction() {
@@ -135,7 +175,7 @@ class LeaveNow {
     }
 
     buildDirectionService() {
-        this._directionsService.route(
+        this.directionsService.route(
             {
               origin: this._startAddress,
               destination: this._endAddress,
@@ -148,7 +188,7 @@ class LeaveNow {
             },
             (response, status) => {
               if (status === "OK") {
-                this._directionsRenderer.setDirections(response);
+                this.directionsRenderer.setDirections(response);
               } else {
                 const errorHandler = new ErrorHandler(status);
                 errorHandler.handle();
@@ -158,54 +198,14 @@ class LeaveNow {
     }
 }
 
-class DepartAt {
+/**
+ * Strategy class to help with leave now pattern. 
+ * @extends {Departure}
+ */
+class DepartAt extends Departure {
     constructor(date, startAddress, endAddress, directionsService, directionsRenderer) {
+        super(date, startAddress, endAddress, directionsService, directionsRenderer);
         this._when = "depart";
-        this._date = date;
-        this._startAddress = startAddress;
-        this._endAddress = endAddress;
-        this._directionsService = directionsService;
-        this._directionsRenderer = directionsRenderer;
-    }
-
-    set_date(date) {
-        this._date = date;
-    }
-
-    get_date() {
-        return this._date;
-    }
-
-    set_startAddress(startAddress) {
-        this._startAddress = startAddress;
-    }
-
-    get_startAddress() {
-        return this._startAddress;
-    }
-
-    set_endAddress(endAddress) {
-        this._endAddress = endAddress;
-    }
-
-    get_endAddress() {
-        return this._endAddress;
-    }
-
-    set_directionsService(directionsService) {
-        this._directionsService = directionsService;
-    }
-
-    get_directionsService() {
-        return this._directionsService;
-    }
-
-    set_directionsRenderer(directionsRenderer) {
-        this._directionsRenderer = directionsRenderer;
-    }
-
-    get_directionsRenderer() {
-        return this._directionsRenderer;
     }
 
     doAction() {
@@ -237,54 +237,14 @@ class DepartAt {
     }
 }
 
-class ArriveAt {
+/**
+ * Strategy class to help with leave now pattern. 
+ * @extends {Departure}
+ */
+class ArriveAt extends Departure {
     constructor(date, startAddress, endAddress, directionsService, directionsRenderer) {
+        super(date, startAddress, endAddress, directionsService, directionsRenderer);
         this._when = "arrive";
-        this._date = date;
-        this._startAddress = startAddress;
-        this._endAddress = endAddress;
-        this._directionsService = directionsService;
-        this._directionsRenderer = directionsRenderer;
-    }
-
-    set_date(date) {
-        this._date = date;
-    }
-
-    get_date() {
-        return this._date;
-    }
-
-    set_startAddress(startAddress) {
-        this._startAddress = startAddress;
-    }
-
-    get_startAddress() {
-        return this._startAddress;
-    }
-
-    set_endAddress(endAddress) {
-        this._endAddress = endAddress;
-    }
-
-    get_endAddress() {
-        return this._endAddress;
-    }
-
-    set_directionsService(directionsService) {
-        this._directionsService = directionsService;
-    }
-
-    get_directionsService() {
-        return this._directionsService;
-    }
-
-    set_directionsRenderer(directionsRenderer) {
-        this._directionsRenderer = directionsRenderer;
-    }
-
-    get_directionsRenderer() {
-        return this._directionsRenderer;
     }
 
     doAction() {
@@ -354,21 +314,21 @@ class ErrorHandler {
 // Utility Functions
 //===================================
 
-/*
+/**
 * Description - Given a string, attempt to replace substring ', USA'
 * For some reason Google's Directions Service isn't handling the USA portion
 * of a supplied address. It causes it to render the wrong locations, so removing
 * it for now.
-* @param string str
+* @param {string} str
 */
 function strReplaceUSA(str) {
     return str.replace(", USA", "");
 }
 
 
-/*
+/** 
 * Show or hide the DOM element with id date-time-container 
-* @return Date - New date or date selected from input
+* @return {Date} - New date or date selected from input
 */
 function showHideDateTimeContainer() {
   var date = new Date();
@@ -387,13 +347,13 @@ function showHideDateTimeContainer() {
 }
 
 
-/*
+/** 
 *
 * Description - Calculates and displays route from user supplied starting and ending location
 * as well as when they want to leave [now, depart at, arrive at].
 * 
-* @param DirectionsService directionsService - google maps DirectionsService class
-* @param DirectionsRenderer directionsRenderer - google maps DirectionsRenderer class
+* @param {DirectionsService} directionsService - google maps DirectionsService class
+* @param {DirectionsRenderer} directionsRenderer - google maps DirectionsRenderer class
 *
 */
 function calculateAndDisplayRoute(directionsService, directionsRenderer) {
@@ -409,21 +369,21 @@ function calculateAndDisplayRoute(directionsService, directionsRenderer) {
   
     //Call respective strategy depending upon user input
     if (when.value === "any") {
-      const leaveNow = new LeaveNow(start, end, directionsService, directionsRenderer);
+      const leaveNow = new LeaveNow(new Date(), start, end, directionsService, directionsRenderer);
   
-      directionsManager.set_strategy(leaveNow);
+      directionsManager.strategy = leaveNow;
       directionsManager.doAction();
     }
     else if (when.value === "depart") {
       const departAt = new DepartAt(date, start, end, directionsService, directionsRenderer);
   
-      directionsManager.set_strategy(departAt);
+      directionsManager.strategy = departAt;
       directionsManager.doAction();
     }
     else if (when.value === "arrive") {
       const arriveAt = new ArriveAt(date, start, end, directionsService, directionsRenderer);
   
-      directionsManager.set_strategy(arriveAt);
+      directionsManager.strategy = arriveAt;
       directionsManager.doAction();
     }
   }
