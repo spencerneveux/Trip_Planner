@@ -177,8 +177,8 @@ class LeaveNow extends Departure {
     buildDirectionService() {
         this.directionsService.route(
             {
-              origin: this._startAddress,
-              destination: this._endAddress,
+              origin: this.startAddress,
+              destination: this.endAddress,
               travelMode: 'TRANSIT',
               transitOptions: {
                 departureTime: new Date(),
@@ -214,10 +214,10 @@ class DepartAt extends Departure {
     }
 
     buildDirectionService() {
-        this._directionsService.route(
+        this.directionsService.route(
             {
-              origin: this._startAddress,
-              destination: this._endAddress,
+              origin: this.startAddress,
+              destination: this.endAddress,
               travelMode: 'TRANSIT',
               transitOptions: {
                 departureTime: new Date(this._date.value),
@@ -227,7 +227,7 @@ class DepartAt extends Departure {
             },
             (response, status) => {
               if (status === "OK") {
-                this._directionsRenderer.setDirections(response);
+                this.directionsRenderer.setDirections(response);
               } else {
                 const errorHandler = new ErrorHandler(status);
                 errorHandler.handle();
@@ -253,10 +253,10 @@ class ArriveAt extends Departure {
     }
 
     buildDirectionService() {
-        this._directionsService.route(
+        this.directionsService.route(
             {
-              origin: this._startAddress,
-              destination: this._endAddress,
+              origin: this.startAddress,
+              destination: this.endAddress,
               travelMode: 'TRANSIT',
               transitOptions: {
                 arrivalTime: new Date(this._date.value),
@@ -266,7 +266,7 @@ class ArriveAt extends Departure {
             },
             (response, status) => {
               if (status === "OK") {
-                this._directionsRenderer.setDirections(response);
+                this.directionsRenderer.setDirections(response);
               } else {
                 const errorHandler = new ErrorHandler(status);
                 errorHandler.handle();
