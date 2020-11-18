@@ -12,6 +12,15 @@
 const LONGBEACH = { lat: 33.77, lng: -118.19 };
 
 function initMap() {
+  //Instantiate Error Handler
+  const errorHandler = new ErrorHandler();
+
+  //Instantiate InfoWindow object to help render information tob
+  const infoWindow = new google.maps.InfoWindow();
+  
+  //Instantiate TransitLayer object to display transit stops and routes
+  const transityLayer = new google.maps.TransitLayer();
+
   //Initialize Service Objects
   const directionsRenderer = new google.maps.DirectionsRenderer();
   const directionsService = new google.maps.DirectionsService();
@@ -28,10 +37,37 @@ function initMap() {
     }
   });
 
-  //Setters for directions renderer
+  //Setters for transit layer, directions renderer, and panel to display direction info
+  transityLayer.setMap(map);  
   directionsRenderer.setMap(map);
   directionsRenderer.setPanel(document.getElementById("directions-panel"));
 
+  //Listen for geolocation click to identify starting location
+  document.getElementById("geolocation-button").addEventListener("click", () => {
+    //Try HTML5 geolocation
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const pos = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          };
+          console.log(pos);
+          infoWindow.setPosition(pos);
+          infoWindow.setContent("Location found.");
+          infoWindow.open(map);
+          map.setCenter(pos);
+        },
+        () => {
+          errorHandler.handleGeolocationError(true, infoWindow, map.getCenter());
+        }
+      );
+    } else {
+      // Browser doesn't support Geolocation
+      errorHandler.handleGeolocationError(false, infoWindow, map.getCenter());
+    }
+  })
+ 
   //Get extra control panel
   const control = document.getElementById("floating-panel");
   control.style.display = "block";
@@ -49,7 +85,6 @@ function initMap() {
     searchBox2.setBounds(map.getBounds());
   });
 
-  //
   const onChangeHandler = function () {
     calculateAndDisplayRoute(directionsService, directionsRenderer);
   };
@@ -99,13 +134,15 @@ class Departure {
      * @param  {Date} date
      * @param  {String} startAddress
      * @param  {String} endAddress
+     * @param  {String} routePreference
      * @param  {DirectionsService} directionsService
      * @param  {DirectionsRenderer} directionsRenderer
      */
-    constructor(date, startAddress, endAddress, directionsService, directionsRenderer) {
+    constructor(date, startAddress, endAddress, routePreference, directionsService, directionsRenderer) {
         this._date = date;
         this._startAddress = startAddress;
         this._endAddress = endAddress;
+        this._routePreference = routePreference;
         this._directionsService = directionsService;
         this._directionsRenderer = directionsRenderer;
     }
@@ -132,6 +169,14 @@ class Departure {
 
     get endAddress() {
         return this._endAddress;
+    }
+
+    set routePreference(routePreference) {
+      this._routePreference = routePreference;
+    }
+
+    get routePreference() {
+      return this._routePreference;
     }
 
     set directionsService(directionsService) {
@@ -164,8 +209,8 @@ class Departure {
  * @extends {Departure}
  */
 class LeaveNow extends Departure {
-    constructor(date, startAddress, endAddress, directionsService, directionsRenderer) {
-        super(date, startAddress, endAddress, directionsService, directionsRenderer);
+    constructor(date, startAddress, endAddress, routePreference, directionsService, directionsRenderer) {
+        super(date, startAddress, endAddress, routePreference, directionsService, directionsRenderer);
         this._when = "now";
     }
 
@@ -176,24 +221,24 @@ class LeaveNow extends Departure {
 
     buildDirectionService() {
         this.directionsService.route(
-            {
-              origin: this.startAddress,
-              destination: this.endAddress,
-              travelMode: 'TRANSIT',
-              transitOptions: {
-                departureTime: new Date(),
-                modes: ['BUS'],
-                routingPreference: 'FEWER_TRANSFERS'
-                }
-            },
-            (response, status) => {
-              if (status === "OK") {
-                this.directionsRenderer.setDirections(response);
-              } else {
-                const errorHandler = new ErrorHandler(status);
-                errorHandler.handle();
+          {
+            origin: this.startAddress,
+            destination: this.endAddress,
+            travelMode: 'TRANSIT',
+            transitOptions: {
+              departureTime: new Date(),
+              modes: ['BUS'],
+              routingPreference: this.routePreference != "" ? this.routePreference : null
               }
+          },
+          (response, status) => {
+            if (status === "OK") {
+              this.directionsRenderer.setDirections(response);
+            } else {
+              const errorHandler = new ErrorHandler();
+              errorHandler.handleDirectionsServiceError(status);
             }
+          }
         );
     }
 }
@@ -203,8 +248,8 @@ class LeaveNow extends Departure {
  * @extends {Departure}
  */
 class DepartAt extends Departure {
-    constructor(date, startAddress, endAddress, directionsService, directionsRenderer) {
-        super(date, startAddress, endAddress, directionsService, directionsRenderer);
+    constructor(date, startAddress, endAddress, routePreference, directionsService, directionsRenderer) {
+        super(date, startAddress, endAddress, routePreference, directionsService, directionsRenderer);
         this._when = "depart";
     }
 
@@ -215,24 +260,24 @@ class DepartAt extends Departure {
 
     buildDirectionService() {
         this.directionsService.route(
-            {
-              origin: this.startAddress,
-              destination: this.endAddress,
-              travelMode: 'TRANSIT',
-              transitOptions: {
-                departureTime: new Date(this._date.value),
-                modes: ['BUS'],
-                routingPreference: 'FEWER_TRANSFERS'
-                }
-            },
-            (response, status) => {
-              if (status === "OK") {
-                this.directionsRenderer.setDirections(response);
-              } else {
-                const errorHandler = new ErrorHandler(status);
-                errorHandler.handle();
+          {
+            origin: this.startAddress,
+            destination: this.endAddress,
+            travelMode: 'TRANSIT',
+            transitOptions: {
+              departureTime: new Date(this._date.value),
+              modes: ['BUS'],
+              routingPreference: this.routePreference != "" ? this.routePreference : nulle
               }
+          },
+          (response, status) => {
+            if (status === "OK") {
+              this.directionsRenderer.setDirections(response);
+            } else {
+              const errorHandler = new ErrorHandler();
+              errorHandler.handleDirectionsServiceError(status);
             }
+          }
         );
     }
 }
@@ -242,8 +287,8 @@ class DepartAt extends Departure {
  * @extends {Departure}
  */
 class ArriveAt extends Departure {
-    constructor(date, startAddress, endAddress, directionsService, directionsRenderer) {
-        super(date, startAddress, endAddress, directionsService, directionsRenderer);
+    constructor(date, startAddress, endAddress, routePreference, directionsService, directionsRenderer) {
+        super(date, startAddress, endAddress, routePreference, directionsService, directionsRenderer);
         this._when = "arrive";
     }
 
@@ -254,24 +299,24 @@ class ArriveAt extends Departure {
 
     buildDirectionService() {
         this.directionsService.route(
-            {
-              origin: this.startAddress,
-              destination: this.endAddress,
-              travelMode: 'TRANSIT',
-              transitOptions: {
-                arrivalTime: new Date(this._date.value),
-                modes: ['BUS'],
-                routingPreference: 'FEWER_TRANSFERS'
-                }
-            },
-            (response, status) => {
-              if (status === "OK") {
-                this.directionsRenderer.setDirections(response);
-              } else {
-                const errorHandler = new ErrorHandler(status);
-                errorHandler.handle();
+          {
+            origin: this.startAddress,
+            destination: this.endAddress,
+            travelMode: 'TRANSIT',
+            transitOptions: {
+              arrivalTime: new Date(this._date.value),
+              modes: ['BUS'],
+              routingPreference: this.routePreference != "" ? this.routePreference : nulle
               }
+          },
+          (response, status) => {
+            if (status === "OK") {
+              this.directionsRenderer.setDirections(response);
+            } else {
+              const errorHandler = new ErrorHandler();
+              errorHandler.handleDirectionsServiceError(status);
             }
+          }
         );
     }
 }
@@ -280,33 +325,52 @@ class ArriveAt extends Departure {
 // Error Handler
 //=======================================
 class ErrorHandler {
-    constructor(status) {
-        this._status = status;
+  constructor() {
     }
 
-    handle() {
-        switch(this._status) {
-            case "NOT_FOUND":
-                window.alert("Sorry! We coudln't find at least one of the specified locations in your request.");
-                break;
-            case "ZERO_RESULTS":
-                window.alert("Sorry! No route could be found between your origin and destination.");
-                break;
-            case "INVALID_REQUEST":
-                window.alert("Sorry! The request provided was invalid.");
-                break;
-            case "OVER_QUERY_LIMIT":
-                window.alert("Sorry! You have sent too many requests in a given time. Please try again later.");
-                break;
-            case "REQUEST_DENIED":
-                window.alert("Sorry! You don't have access to use the directions service.");
-                break;
-            case "UNKNOWN_ERROR":
-                window.alert("Whoops! We don't know what went wrong.");
-                break;
-        }
+  /**
+   * Description - Handler to deal with directions service errors
+   * @param  {String} status
+   */
+  handleDirectionsServiceError(status) {
+      switch(status) {
+          case "NOT_FOUND":
+              window.alert("Sorry! We coudln't find at least one of the specified locations in your request.");
+              break;
+          case "ZERO_RESULTS":
+              window.alert("Sorry! No route could be found between your origin and destination.");
+              break;
+          case "INVALID_REQUEST":
+              window.alert("Sorry! The request provided was invalid.");
+              break;
+          case "OVER_QUERY_LIMIT":
+              window.alert("Sorry! You have sent too many requests in a given time. Please try again later.");
+              break;
+          case "REQUEST_DENIED":
+              window.alert("Sorry! You don't have access to use the directions service.");
+              break;
+          case "UNKNOWN_ERROR":
+              window.alert("Whoops! We don't know what went wrong.");
+              break;
+      }
     }
 
+    
+  /**
+   * Description - Handler to deal with geolocation errors
+   * @param  {boolean} browserHasGeolocation
+   * @param  {InfoWindow} infoWindow
+   * @param  {Object} pos
+   */
+  handleGeolocationError(browserHasGeolocation, infoWindow, pos) {
+    infoWindow.setPosition(pos);
+    infoWindow.setContent(
+    browserHasGeolocation
+      ? "Error: The Geolocation service failed."
+      : "Error: Your browser doesn't support geolocation."
+    );
+    infoWindow.open(map)
+  }
 }
 
 
@@ -360,6 +424,8 @@ function calculateAndDisplayRoute(directionsService, directionsRenderer) {
     var when = document.getElementById("when");
     var start = strReplaceUSA(document.getElementById("start").value);
     var end = strReplaceUSA(document.getElementById("end").value);
+    var routePreference = document.getElementById("route-preference").value;
+    console.log(routePreference);
   
     //Identify if departure or arrival time is selected & get date value
     var date = showHideDateTimeContainer();
@@ -369,19 +435,19 @@ function calculateAndDisplayRoute(directionsService, directionsRenderer) {
   
     //Call respective strategy depending upon user input
     if (when.value === "any") {
-      const leaveNow = new LeaveNow(new Date(), start, end, directionsService, directionsRenderer);
+      const leaveNow = new LeaveNow(new Date(), start, end, routePreference, directionsService, directionsRenderer);
   
       directionsManager.strategy = leaveNow;
       directionsManager.doAction();
     }
     else if (when.value === "depart") {
-      const departAt = new DepartAt(date, start, end, directionsService, directionsRenderer);
+      const departAt = new DepartAt(date, start, end, routePreference, directionsService, directionsRenderer);
   
       directionsManager.strategy = departAt;
       directionsManager.doAction();
     }
     else if (when.value === "arrive") {
-      const arriveAt = new ArriveAt(date, start, end, directionsService, directionsRenderer);
+      const arriveAt = new ArriveAt(date, start, end, routePreference, directionsService, directionsRenderer);
   
       directionsManager.strategy = arriveAt;
       directionsManager.doAction();

@@ -13,6 +13,14 @@ body {
         "map directions";
 }
 
+.input-add-on {
+    display:flex;
+}
+
+.input-add-on-field {
+    flex:1;
+}
+
 #floating-panel {
     position: absolute;
     top: 10px;
@@ -36,7 +44,7 @@ body {
 }
   
 #map-container {
-    height: 100vh;
+    height: 90vh;
     width: 100%;
 }
 
@@ -77,6 +85,14 @@ body {
     border: 2px solid;
     border-radius: 5px;
     margin-top: 5px;
+}
+
+#geolocation-button {
+    font-size: 18px;
+    font-weight: 300;
+    background-color: #e02b20;
+    color: #fff;
+    border-radius: 5px;
 }
 
 @media (max-width: 700px) {
