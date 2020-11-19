@@ -267,7 +267,7 @@ class DepartAt extends Departure {
             transitOptions: {
               departureTime: new Date(this._date.value),
               modes: ['BUS'],
-              routingPreference: this.routePreference != "" ? this.routePreference : nulle
+              routingPreference: this.routePreference != "" ? this.routePreference : null
               }
           },
           (response, status) => {
@@ -306,7 +306,7 @@ class ArriveAt extends Departure {
             transitOptions: {
               arrivalTime: new Date(this._date.value),
               modes: ['BUS'],
-              routingPreference: this.routePreference != "" ? this.routePreference : nulle
+              routingPreference: this.routePreference != "" ? this.routePreference : null
               }
           },
           (response, status) => {
