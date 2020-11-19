@@ -42,32 +42,6 @@ function initMap() {
   directionsRenderer.setMap(map);
   directionsRenderer.setPanel(document.getElementById("directions-panel"));
 
-  //Listen for geolocation click to identify starting location
-  document.getElementById("geolocation-button").addEventListener("click", () => {
-    //Try HTML5 geolocation
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const pos = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          };
-          console.log(pos);
-          infoWindow.setPosition(pos);
-          infoWindow.setContent("Location found.");
-          infoWindow.open(map);
-          map.setCenter(pos);
-        },
-        () => {
-          errorHandler.handleGeolocationError(true, infoWindow, map.getCenter());
-        }
-      );
-    } else {
-      // Browser doesn't support Geolocation
-      errorHandler.handleGeolocationError(false, infoWindow, map.getCenter());
-    }
-  })
- 
   //Get extra control panel
   const control = document.getElementById("floating-panel");
   control.style.display = "block";
@@ -88,6 +62,11 @@ function initMap() {
   const onChangeHandler = function () {
     calculateAndDisplayRoute(directionsService, directionsRenderer);
   };
+
+  //Listen for geolocation click to identify starting location
+  document.getElementById("geolocation-button").addEventListener("click", () => {
+    updateStartingLocation(map, infoWindow);
+  })
 
   //Event listeners for input options
   document.getElementById("when").addEventListener("change", showHideDateTimeContainer);
@@ -410,6 +389,49 @@ function showHideDateTimeContainer() {
   return date;
 }
 
+/**
+ * Description - Grab the users current lat/lng and update the starting location
+ * input field with those values.
+ * @param  {google.maps.Map} map
+ * @param  {google.maps.InfoWindow} infoWindow
+ */
+function updateStartingLocation(map, infoWindow) {
+  const startAddress = document.getElementById("start");
+
+  //Try HTML5 geolocation
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const pos = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+
+        var latLng = "?latlng=" + position.coords.latitude + ", " + position.coords.longitude;
+
+        //Set input value and text
+        startAddress.value = pos['lat'] + ", " + pos['lng'];
+
+        const json = fetch('https://maps.googleapis.com/maps/api/geocode/json' + latLng + '&key=AIzaSyDUh0RlZpGvwLqA2k-WC6ZdeSGYuIPjDDU')
+        .then(response => response.json())
+        .then(data => console.log(data['results'][0]['formatted_address'])
+        );
+        
+        console.log(pos);
+        infoWindow.setPosition(pos);
+        infoWindow.setContent("Location found.");
+        infoWindow.open(map);
+        map.setCenter(pos);
+      },
+      () => {
+        errorHandler.handleGeolocationError(true, infoWindow, map.getCenter());
+      }
+    );
+  } else {
+    // Browser doesn't support Geolocation
+    errorHandler.handleGeolocationError(false, infoWindow, map.getCenter());
+  }
+}
 
 /** 
 *
@@ -425,12 +447,11 @@ function calculateAndDisplayRoute(directionsService, directionsRenderer) {
     var start = strReplaceUSA(document.getElementById("start").value);
     var end = strReplaceUSA(document.getElementById("end").value);
     var routePreference = document.getElementById("route-preference").value;
-    console.log(routePreference);
   
     //Identify if departure or arrival time is selected & get date value
     var date = showHideDateTimeContainer();
   
-    //Instantiat direction manager class to handle time inputs
+    //Instantiate direction manager class to handle custom routes
     const directionsManager = new DirectionsManager();
   
     //Call respective strategy depending upon user input
