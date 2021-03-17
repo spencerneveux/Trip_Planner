@@ -1,6 +1,6 @@
 /*
  * Plugin Name: Long Beach Transit - Trip Planner 
- * Plugin URI: http://communeweb.wpengine.com
+ * Plugin URI: http://ridelbt.com
  * Description: A custom trip planner for the Long Beach Transit bus system, using GTFS feed supplied to Google Maps. 
  * Author: Spencer Neveux 
  * Version: 0.0.1 
