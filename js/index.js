@@ -468,5 +468,3 @@ function calculateAndDisplayRoute(directionsService, directionsRenderer) {
       directionsManager.doAction();
     }
   }
-
-</script>
